@@ -15,7 +15,12 @@ namespace ECS.Managers
             get { return DatabaseManager.Instance.EquipmentItems; }
         }
 
-        public Equipment SearchEquipment(string equipmentName)
+        public Equipment SearchEquipmentById(int equipmentId)
+        {
+            return EquipmentList.FirstOrDefault(e => e.EquipmentID == equipmentId);
+        }
+
+        public Equipment SearchEquipmentByName(string equipmentName)
         {
             return EquipmentList.FirstOrDefault(
                 e => e.EquipmentName.Equals(equipmentName, StringComparison.OrdinalIgnoreCase)
@@ -32,6 +37,21 @@ namespace ECS.Managers
         {
             equipment.UpdateStatus(condition);
             DatabaseManager.Instance.UpdateRecord("Equipment Condition");
+        }
+
+        public void DisplayAllEquipment()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Available Equipment Records:");
+            foreach (Equipment equipment in EquipmentList)
+            {
+                Console.WriteLine(
+                    "ID: " + equipment.EquipmentID +
+                    " | Name: " + equipment.EquipmentName +
+                    " | Status: " + equipment.Status +
+                    " | Required Skill: " + equipment.RequiredSkill
+                );
+            }
         }
     }
 }

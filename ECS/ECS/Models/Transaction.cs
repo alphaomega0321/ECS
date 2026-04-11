@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace ECS.Models
 {
     public class Transaction
     {
         public int TransactionID { get; set; }
+        public int EmployeeID { get; set; }
+        public int EquipmentID { get; set; }
         public DateTime CheckoutDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public string TransactionStatus { get; set; }

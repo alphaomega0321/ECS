@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using ECS.Factories;
 using ECS.Interfaces;
 
-
 namespace ECS.Managers
 {
     public class ReportManager
@@ -22,16 +21,6 @@ namespace ECS.Managers
         {
             IReport report = ReportFactory.CreateReport(reportType);
             report.Generate();
-        }
-
-        public void GenerateUsageReport()
-        {
-            GenerateReport("usage");
-        }
-
-        public void GenerateLossReport()
-        {
-            GenerateReport("loss");
         }
 
         public void FilterReport(string criteria)

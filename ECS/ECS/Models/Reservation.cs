@@ -9,6 +9,8 @@ namespace ECS.Models
     public class Reservation
     {
         public int ReservationID { get; set; }
+        public int EmployeeID { get; set; }
+        public int EquipmentID { get; set; }
         public DateTime RequestDate { get; set; }
         public DateTime PickupDate { get; set; }
         public string ReservationStatus { get; set; }

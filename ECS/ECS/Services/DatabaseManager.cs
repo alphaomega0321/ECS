@@ -19,6 +19,7 @@ namespace ECS.Services
         public List<Reservation> Reservations { get; private set; }
         public List<Transaction> Transactions { get; private set; }
         public List<string> AuditEntries { get; private set; }
+        public List<UserAccount> UserAccounts { get; private set; }
 
         private DatabaseManager()
         {
@@ -29,6 +30,7 @@ namespace ECS.Services
             Reservations = new List<Reservation>();
             Transactions = new List<Transaction>();
             AuditEntries = new List<string>();
+            UserAccounts = new List<UserAccount>();
         }
 
         public static DatabaseManager Instance

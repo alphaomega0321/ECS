@@ -12,26 +12,37 @@ namespace ECS.Managers
     {
         public Transaction CurrentTransaction { get; private set; }
 
-        public bool ValidateEmployeeEligibility(Employee employee)
+        public bool ValidateEmployeeEligibility(Employee employee, Equipment equipment)
         {
-            bool valid = employee.ActiveStatus;
-            if (valid)
+            if (!employee.ActiveStatus)
             {
-                Console.WriteLine("Employee " + employee.EmployeeName + " is eligible.");
+                Console.WriteLine("Employee " + employee.EmployeeName + " is not active.");
+                return false;
             }
-            else
+
+            if (!string.IsNullOrWhiteSpace(equipment.RequiredSkill) &&
+                !employee.SkillClassification.Equals(equipment.RequiredSkill, StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("Employee " + employee.EmployeeName + " is not eligible.");
+                Console.WriteLine("Employee skill classification does not match equipment requirement.");
+                return false;
             }
-            return valid;
+
+            Console.WriteLine("Employee " + employee.EmployeeName + " is eligible.");
+            return true;
         }
 
-        public void ProcessCheckout(Employee employee, Equipment equipment, BarcodeScanner scanner)
+        public bool ProcessCheckout(Employee employee, Equipment equipment, BarcodeScanner scanner)
         {
-            if (!ValidateEmployeeEligibility(employee))
+            if (equipment.Status != "Available")
+            {
+                Console.WriteLine("Checkout stopped. Equipment is currently not available.");
+                return false;
+            }
+
+            if (!ValidateEmployeeEligibility(employee, equipment))
             {
                 Console.WriteLine("Checkout stopped. Employee is not eligible.");
-                return;
+                return false;
             }
 
             string scannedCode = scanner.ScanBarcode(equipment.BarcodeValue);
@@ -41,21 +52,33 @@ namespace ECS.Managers
 
             CurrentTransaction = new Transaction();
             CurrentTransaction.TransactionID = DatabaseManager.Instance.Transactions.Count + 1;
+            CurrentTransaction.EmployeeID = employee.EmployeeID;
+            CurrentTransaction.EquipmentID = equipment.EquipmentID;
             CurrentTransaction.RecordCheckout();
 
             DatabaseManager.Instance.Transactions.Add(CurrentTransaction);
             DatabaseManager.Instance.SaveRecord("Transaction");
+
+            return true;
         }
 
-        public void ProcessReturn(Equipment equipment)
+        public bool ProcessReturn(Equipment equipment)
         {
-            equipment.ReturnToInventory();
+            Transaction openTransaction = DatabaseManager.Instance.Transactions
+                .LastOrDefault(t => t.EquipmentID == equipment.EquipmentID &&
+                                    t.TransactionStatus == "Checked Out");
 
-            if (CurrentTransaction != null)
+            if (equipment.Status != "Checked Out" || openTransaction == null)
             {
-                CurrentTransaction.RecordReturn();
-                DatabaseManager.Instance.UpdateRecord("Transaction");
+                Console.WriteLine("Return stopped. Equipment is not currently checked out.");
+                return false;
             }
+
+            equipment.ReturnToInventory();
+            openTransaction.RecordReturn();
+            DatabaseManager.Instance.UpdateRecord("Transaction");
+
+            return true;
         }
     }
 }
