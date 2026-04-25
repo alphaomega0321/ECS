@@ -12,9 +12,13 @@ namespace ECS
     {
         public static void Main(string[] args)
         {
+            // Initialize system and simulate database connection
             DatabaseManager.Instance.OpenConnection();
+
+            // Load initial seed data for testing and demonstration
             SeedData();
 
+            // Instantiate all core system components
             AuthenticationService authService = new AuthenticationService();
             CheckoutManager checkoutManager = new CheckoutManager();
             InventoryManager inventoryManager = new InventoryManager();
@@ -25,16 +29,29 @@ namespace ECS
 
             bool running = true;
 
+            // Main application loop
             while (running)
             {
+                // Ensure user is authenticated before accessing system features
                 if (!SessionManager.IsLoggedIn)
                 {
                     RunLogin(authService);
                 }
 
                 Console.WriteLine();
-                Console.WriteLine("████████╗ ██████╗  ██████╗ ██╗      ██████╗██████╗ ██╗██████╗ \r\n╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝██╔══██╗██║██╔══██╗\r\n   ██║   ██║   ██║██║   ██║██║     ██║     ██████╔╝██║██████╔╝\r\n   ██║   ██║   ██║██║   ██║██║     ██║     ██╔══██╗██║██╔══██╗\r\n   ██║   ╚██████╔╝╚██████╔╝███████╗╚██████╗██║  ██║██║██████╔╝\r\n   ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝ ");
+
+                // System header (visual branding for UI)
+                Console.WriteLine("████████╗ ██████╗  ██████╗ ██╗      ██████╗██████╗ ██╗██████╗ ");
+                Console.WriteLine("╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝██╔══██╗██║██╔══██╗");
+                Console.WriteLine("   ██║   ██║   ██║██║   ██║██║     ██║     ██████╔╝██║██████╔╝");
+                Console.WriteLine("   ██║   ██║   ██║██║   ██║██║     ██║     ██╔══██╗██║██╔══██╗");
+                Console.WriteLine("   ██║   ╚██████╔╝╚██████╔╝███████╗╚██████╗██║  ██║██║██████╔╝");
+                Console.WriteLine("   ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝ ");
+
+                // Display logged-in user and role (important for role-based access)
                 Console.WriteLine("Logged in as: " + SessionManager.CurrentUser.Username + " (" + SessionManager.CurrentUser.Role + ")");
+
+                // Main system menu
                 Console.WriteLine("1. Checkout Equipment");
                 Console.WriteLine("2. Return Equipment");
                 Console.WriteLine("3. Make Reservation");
@@ -47,6 +64,7 @@ namespace ECS
 
                 string choice = Console.ReadLine();
 
+                // Process user menu selection
                 switch (choice)
                 {
                     case "1":
@@ -72,14 +90,17 @@ namespace ECS
                         break;
 
                     case "6":
+                        // Displays all equipment and their current status
                         inventoryManager.DisplayAllEquipment();
                         break;
 
                     case "7":
+                        // Ends current user session
                         authService.Logout();
                         break;
 
                     case "8":
+                        // Terminates the application
                         running = false;
                         Console.WriteLine("Exiting system...");
                         break;
@@ -91,18 +112,23 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Handles login process and loops until valid credentials are provided.
+        /// </summary>
         private static void RunLogin(AuthenticationService authService)
         {
             while (!SessionManager.IsLoggedIn)
             {
                 Console.WriteLine();
                 Console.WriteLine("===== ECS Login =====");
+
                 Console.Write("Username: ");
                 string username = Console.ReadLine();
 
                 Console.Write("Password: ");
                 string password = ReadPassword();
 
+                // Attempt to authenticate user
                 UserAccount user = authService.Login(username, password);
 
                 if (user == null)
@@ -112,6 +138,9 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Reads password input and masks characters for security.
+        /// </summary>
         private static string ReadPassword()
         {
             string password = string.Empty;
@@ -121,11 +150,13 @@ namespace ECS
             {
                 keyInfo = Console.ReadKey(true);
 
+                // Add character and display mask
                 if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
                 {
                     password += keyInfo.KeyChar;
                     Console.Write("*");
                 }
+                // Handle backspace functionality
                 else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
                 {
                     password = password.Substring(0, password.Length - 1);
@@ -138,6 +169,10 @@ namespace ECS
             return password;
         }
 
+        /// <summary>
+        /// Seeds initial data into the simulated database.
+        /// Prevents duplicate data if already loaded.
+        /// </summary>
         private static void SeedData()
         {
             if (DatabaseManager.Instance.Employees.Count > 0)
@@ -218,7 +253,7 @@ namespace ECS
                 Location = "Depot Shelf D"
             });
 
-            // User accounts
+            // User accounts (authentication + roles)
             DatabaseManager.Instance.UserAccounts.Add(new UserAccount
             {
                 UserID = 1,
@@ -247,6 +282,9 @@ namespace ECS
             });
         }
 
+        /// <summary>
+        /// Handles equipment checkout process including validation and logging.
+        /// </summary>
         private static void HandleCheckout(
             CheckoutManager checkoutManager,
             InventoryManager inventoryManager,
@@ -272,11 +310,14 @@ namespace ECS
                 return;
             }
 
+            // Perform checkout validation and processing
             bool success = checkoutManager.ProcessCheckout(employee, equipment, scanner);
 
             if (success)
             {
                 inventoryManager.UpdateAvailability(equipment, "Checked Out");
+
+                // Log action for audit tracking
                 auditLog.RecordAction(
                     "User " + SessionManager.CurrentUser.Username +
                     " checked out equipment. Employee ID: " + employee.EmployeeID +
@@ -285,6 +326,9 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Handles equipment return process and updates system records.
+        /// </summary>
         private static void HandleReturn(
             CheckoutManager checkoutManager,
             InventoryManager inventoryManager,
@@ -307,6 +351,8 @@ namespace ECS
             if (success)
             {
                 inventoryManager.UpdateAvailability(equipment, "Available");
+
+                // Log return action
                 auditLog.RecordAction(
                     "User " + SessionManager.CurrentUser.Username +
                     " returned equipment. Equipment ID: " + equipment.EquipmentID
@@ -314,6 +360,9 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Handles reservation creation and approval.
+        /// </summary>
         private static void HandleReservation(
             ReservationManager reservationManager,
             AuditLog auditLog)
@@ -344,6 +393,8 @@ namespace ECS
             if (reservation != null)
             {
                 reservationManager.ApproveReservation(reservation);
+
+                // Log reservation activity
                 auditLog.RecordAction(
                     "User " + SessionManager.CurrentUser.Username +
                     " created and approved a reservation. Employee ID: " + employee.EmployeeID +
@@ -352,10 +403,14 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Handles report generation with role-based access control.
+        /// </summary>
         private static void HandleReport(
             ReportManager reportManager,
             AuditLog auditLog)
         {
+            // Enforce role-based access restriction
             if (SessionManager.CurrentUser.Role != "Supervisor" &&
                 SessionManager.CurrentUser.Role != "Admin")
             {
@@ -395,6 +450,9 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Prompts user to select an employee by ID.
+        /// </summary>
         private static Employee SelectEmployee()
         {
             Console.Write("Enter Employee ID: ");
@@ -410,6 +468,9 @@ namespace ECS
                 .FirstOrDefault(e => e.EmployeeID == employeeId);
         }
 
+        /// <summary>
+        /// Prompts user to select equipment by ID.
+        /// </summary>
         private static Equipment SelectEquipment()
         {
             Console.Write("Enter Equipment ID: ");
